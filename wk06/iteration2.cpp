@@ -14,5 +14,12 @@ using namespace std;
 
 void printEverySecond(const list<int>& lst)
 {
-    // ADD YOUR CODE HERE
+    bool print = true;
+        for (const auto& item : lst) {
+            if (print) {
+                std::cout << item << " ";
+            }
+            print = !print;
+        }
+        std::cout << std::endl;
 }
