@@ -15,6 +15,11 @@ using namespace std;
  */
 int sortDesc(std::vector<int>& v)
 {
+    std::sort (v.begin(), v.end());
+    if (std::is_sorted(v.begin(),v.end())){
+        std::reverse(v.begin(),v.end());
+        return EXIT_SUCCESS;
+    }
     return EXIT_FAILURE;
 }
 
