@@ -19,16 +19,18 @@ int sortMod3(std::vector<int>& v)
     // Create three empty vectors to store the elements divisible by 3, with
     // remainder 1, and with remainder 2, respectively.
     std::vector<int> DivBy3;
+    std::vector<int> Remainderx;
     std::vector<int> Remainder1;
     std::vector<int> Remainder2;
 
+
     // Partition the input vector `v` into the three vectors based on the remainder
     // of each element when divided by 3.
-    std::partition_copy(v.begin(), v.end(), std::back_inserter(DivBy3),
+    std::partition_copy(v.begin(), v.end(), std::back_inserter(DivBy3), std::back_inserter(Remainderx),
                         [](int x) { return x % 3 == 0; });
-    std::partition_copy(v.begin(), v.end(), std::back_inserter(Remainder1),
+    std::partition_copy(v.begin(), v.end(), std::back_inserter(Remainder1),std::back_inserter(Remainderx),
                         [](int x) { return x % 3 == 1; });
-    std::partition_copy(v.begin(), v.end(), std::back_inserter(Remainder2),
+    std::partition_copy(v.begin(), v.end(), std::back_inserter(Remainder2),std::back_inserter(Remainderx),
                         [](int x) { return x % 3 == 2; });
 
     // Sort the three vectors in ascending order.
