@@ -15,6 +15,10 @@ using namespace std;
  */
 int removeLessThan(std::vector<int>& v, int limit)
 {
-    return EXIT_FAILURE;
+    std ::vector<int>tempv;
+    std::copy_if(v.begin(),v.end(),std::back_inserter(tempv),[limit](int x){return x > limit;});
+    v.clear();
+    v.insert(v.end(),tempv.begin(), tempv.end());
+    return EXIT_SUCCESS;
 }
 
