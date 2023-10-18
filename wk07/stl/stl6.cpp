@@ -15,34 +15,28 @@ using namespace std;
  * @param given limit for the values to search
  * @return int the real found value
  */
-bool isGreater (int i,int given) {
-  return (i>=given);
-}
 
 int findAtLeastGiven(std::map<std::string, int>& m, int given)
 {
-        // create a empty vector of pairs
-       vector<pair<string, int>> vec;
+    // Convert the map to a vector of pairs, sorted by the second value of each
+    // pair.
+    std::vector<std::pair<std::string, int>> vec(m.begin(), m.end());
+    std::sort(vec.begin(), vec.end(), [](const auto& p1, const auto& p2) {
+      return p1.second < p2.second;
+    });
 
-        // copy key-value pairs from the map to the vector
-      map<string, int> :: iterator it2;
-      for (it2=m.begin(); it2!=m.end(); it2++)
-      {
-        vec.push_back(make_pair(it2->first, it2->second));
-      }
+    // Use the std::lower_bound() algorithm to find the first element in the vector
+    // whose value is greater than or equal to the given value.
+    auto it = std::lower_bound(vec.begin(), vec.end(), given,
+                               [](const auto& p, int value) { return p.second < value; });
 
-        // // sort the vector by increasing order of its pair's second value
-      sort(vec.begin(), vec.end(), [m](pair<string, int> &a,const pair<string, int> &b){ return (a.second < b.second); });
-    // Create an iterator to the first element in the map.
-      auto it = vec.begin();
+    // If the iterator is at the end of the vector, then there is no element in the
+    // map whose value is at least the given limit. Return NOT_FOUND.
+    if (it == vec.end()) {
+      return NOT_FOUND;
+    }
 
-      it = std::lower_bound(vec.begin(), vec.end(), given,
-                             [](const auto& p, int value) { return p.second < value; });
-
-      if (it == vec.end()) {
-        return NOT_FOUND;
-      }
-
-      return it->second;
+    // Otherwise, return the value of the element at the iterator.
+    return it->second;
 }
 
