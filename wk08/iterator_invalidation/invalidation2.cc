@@ -12,8 +12,11 @@ using namespace std;
  */
 void eraseEverySecond(std::vector<int>& vec) {
     auto beg = vec.begin();
-    auto end = vec.end();
-    for (auto i = beg; i != end; i = i+2)
-    { vec.erase(i); }
+    for (auto i = beg; i != (beg + vec.size()); i++){
+        vec.erase(i+1);
+        if (i >= vec.end()){
+            break;
+        }
+    }
 }
 
