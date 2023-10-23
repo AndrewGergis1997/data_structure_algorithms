@@ -14,18 +14,23 @@ void duplicateEvenRemoveUneven(std::vector<int>& vec) {
 
     using Iter = std::vector<int>::iterator;
 
-    Iter begin = vec.begin();
+
     Iter end = vec.end();
-    for ( Iter it = begin; it < end; it++){
+    Iter it = vec.begin();
+    int count = 0;
+    while (it != vec.end()){
         if ( *it % 2 == 0 ){
             vec.insert(it, *it);
-            it++;
-
+            end = vec.end();
+            count++;
         }
         else {
             vec.erase(it);
-            it--;
+            end = vec.end();
+            count--;
         }
+        count++;
+        it = vec.begin() + count;
     }
 }
 
