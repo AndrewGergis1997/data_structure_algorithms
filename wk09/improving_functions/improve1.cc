@@ -10,10 +10,9 @@
  * @return std::vector<int>
  */
 std::vector<int> ascendingVector(int n){
-    std::vector<int> v;
-    v.reserve(n);
-    for (int i = 0; i < n; i++) {
-      std::back_inserter(v) = i;
+    std::vector<int> v(n);
+    for ( int i = 0; i < n ; i++){
+        v.at(i) = i;
     }
     return v;
 }
