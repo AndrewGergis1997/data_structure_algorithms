@@ -1,8 +1,8 @@
 // Datastructures.hh
 //
-// Student name:
-// Student email:
-// Student number:
+// Student name: Andrew Gergis
+// Student email: andrew.gergis@tuni.fi
+// Student number: 150905291
 
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
@@ -14,6 +14,9 @@
 #include <limits>
 #include <functional>
 #include <exception>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
 
 // Types for IDs
 using AffiliationID = std::string;
@@ -97,98 +100,120 @@ public:
     Datastructures();
     ~Datastructures();
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    // Size operation is constant time
     unsigned int get_affiliation_count();
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // clear method is constant in time
     void clear_all();
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // for loop iterate over all elements
     std::vector<AffiliationID> get_all_affiliations();
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    //insertion is constant time
     bool add_affiliation(AffiliationID id, Name const& name, Coord xy);
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    // find method is constant time
     Name get_affiliation_name(AffiliationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    // find method is constant time
     Coord get_affiliation_coord(AffiliationID id);
 
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance:
+    // Estimate of performance: O(n log(n))
     // Short rationale for estimate:
+    // sort is dominating te function and it is of O(n log n) time complixity
     std::vector<AffiliationID> get_affiliations_alphabetically();
 
-    // Estimate of performance:
+    // Estimate of performance:O(n log(n))
     // Short rationale for estimate:
+    // sort is dominating te function and it is of O(n log n) time complixity
     std::vector<AffiliationID> get_affiliations_distance_increasing();
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // find_if is of O(n) complexity
     AffiliationID find_affiliation_with_coord(Coord xy);
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // find is of O(n) complexity
     bool change_affiliation_coord(AffiliationID id, Coord newcoord);
 
 
     // We recommend you implement the operations below only after implementing the ones above
 
-    // Estimate of performance:
+    // Estimate of performance: O(nlog n)
     // Short rationale for estimate:
+    // sort is the dominant factor
     bool add_publication(PublicationID id, Name const& name, Year year, const std::vector<AffiliationID> & affiliations);
 
-    // Estimate of performance:
+    // Estimate of performance: O(nlog n)
     // Short rationale for estimate:
+    // sort is the dominant factor
     std::vector<PublicationID> all_publications();
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // find is of O(n) complexity
     Name get_publication_name(PublicationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    // most operations are constant time
     Year get_publication_year(PublicationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // The for loop is causing that n
     std::vector<AffiliationID> get_affiliations(PublicationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(1)
     // Short rationale for estimate:
+    //  This function simply add a reference to pub
     bool add_reference(PublicationID id, PublicationID parentid);
 
-    // Estimate of performance:
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
+    // The for loop is O(n) and it is the dominant factor
     std::vector<PublicationID> get_direct_references(PublicationID id);
 
-    // Estimate of performance:
+    // Estimate of performance:O(1)
     // Short rationale for estimate:
+    // adding is a simple operation
     bool add_affiliation_to_publication(AffiliationID affiliationid, PublicationID publicationid);
 
-    // Estimate of performance:
+    // Estimate of performance: O(nlog n)
     // Short rationale for estimate:
+    // sort is the dominant factor
     std::vector<PublicationID> get_publications(AffiliationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(n^2)
     // Short rationale for estimate:
+    // Two nested for loops
     PublicationID get_parent(PublicationID id);
 
-    // Estimate of performance:
+    // Estimate of performance: O(nlog n)
     // Short rationale for estimate:
+    // dominant factor is the sorting operation
     std::vector<std::pair<Year, PublicationID>> get_publications_after(AffiliationID affiliationid, Year year);
 
-    // Estimate of performance:
+    // Estimate of performance: O(n^2)
     // Short rationale for estimate:
+    // Two nested loops are causing the performence to be of O(n^2)
     std::vector<PublicationID> get_referenced_by_chain(PublicationID id);
 
 
@@ -216,6 +241,22 @@ public:
 
 
 private:
+
+    //Definition of data structure to store affiliations and publications
+    struct Affiliation{
+        Name affName;
+        Coord location;
+        std::unordered_map<Year, std::vector<PublicationID>> publicationsByYear;
+    };
+    std::unordered_map<AffiliationID, Affiliation> affiliationsMap;
+    struct Publication{
+        PublicationID id;
+        std::unordered_map<Name, Year> pubData;
+        std::vector<Publication*> references;
+        Publication* parentPublication;
+        std::vector<Affiliation*> affiliation;
+    };
+    std::unordered_map<PublicationID, Publication> publicationsMap;
 
 };
 
