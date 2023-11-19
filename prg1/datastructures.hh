@@ -205,7 +205,7 @@ public:
 
     // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // unction iterates over all the publications in the publicationsMap to build the parentMap
+    // Function iterates over all the publications in the publicationsMap to build the parentMap but it is O(n^2)
     PublicationID get_parent(PublicationID id);
 
     // Estimate of performance: O(nlog n)
