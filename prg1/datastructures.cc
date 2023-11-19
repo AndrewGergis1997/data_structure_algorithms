@@ -107,52 +107,63 @@ Coord Datastructures::get_affiliation_coord(AffiliationID id)
 
 std::vector<AffiliationID> Datastructures::get_affiliations_alphabetically()
 {
-    std::vector<AffiliationID> affiliationsAlphabetical;
-    affiliationsAlphabetical.reserve(affiliationsMap.size());
+    // Create a vector of pairs with affiliation names and IDs
+    std::vector<std::pair<Name, AffiliationID>> affiliationPairs;
 
-    // Extracting affiliation IDs and store in a temporary vector
-    std::vector<AffiliationID> tempIDs;
+    // Populate the vector with affiliation names and IDs
+    for (const auto& entry : affiliationsMap)
+    {
+        affiliationPairs.emplace_back(entry.second.affName, entry.first);
+    }
 
-    std::transform(affiliationsMap.begin(), affiliationsMap.end(), std::back_inserter(tempIDs),[](const auto& pair) { return pair.first; });
+    // Sort the vector alphabetically based on affiliation names
+    std::sort(affiliationPairs.begin(), affiliationPairs.end());
 
-    // Sort the temporary vector alphabetically
-    std::sort(tempIDs.begin(), tempIDs.end(), [this](const AffiliationID& a, const AffiliationID& b) {
-        return affiliationsMap[a].affName < affiliationsMap[b].affName;
-    });
+    // Extract sorted affiliation IDs from the sorted vector
+    std::vector<AffiliationID> sortedAffiliations;
+    for (const auto& pair : affiliationPairs)
+    {
+        sortedAffiliations.push_back(pair.second);
+    }
 
-    // Copy the sorted IDs to the final result
-    affiliationsAlphabetical = std::move(tempIDs);
-
-    return affiliationsAlphabetical;
+    return sortedAffiliations;
 }
 
 std::vector<AffiliationID> Datastructures::get_affiliations_distance_increasing()
 {
-    std::vector<AffiliationID> affiliationsByDistance;
-    affiliationsByDistance.reserve(affiliationsMap.size()); // Reserve space for efficiency
+    // Create a vector of pairs with affiliation coordinates and IDs
+    std::vector<std::pair<Coord, AffiliationID>> affiliationPairs;
 
-    // Create vector of affiliation IDs
-    std::vector<AffiliationID> tempIDs;
-    std::transform(
-                affiliationsMap.begin(), affiliationsMap.end(), std::back_inserter(tempIDs),
-                [](const auto& pair) { return pair.first; }
-    );
+    // Populate the vector with affiliation coordinates and IDs
+    for (const auto& entry : affiliationsMap)
+    {
+        affiliationPairs.emplace_back(entry.second.location, entry.first);
+    }
 
-    // Sort the IDs by distance
-    std::sort(tempIDs.begin(), tempIDs.end(), [this](const AffiliationID& a, const AffiliationID& b) {
-        const Coord& coordA = affiliationsMap[a].location;
-        const Coord& coordB = affiliationsMap[b].location;
-        // Calculate the distance based on the coordinates (you'll need your distance formula here)
-        // Here's an example using Euclidean distance squared for simplicity
-        int distanceA = coordA.x * coordA.x + coordA.y * coordA.y;
-        int distanceB = coordB.x * coordB.x + coordB.y * coordB.y;
-        return distanceA < distanceB;
+    // Sort the vector based on distance and y-value
+    std::sort(affiliationPairs.begin(), affiliationPairs.end(),
+              [](const auto& a, const auto& b)
+    {
+        // Calculate Euclidean distances
+        auto distanceA = std::sqrt(a.first.x * a.first.x + a.first.y * a.first.y);
+        auto distanceB = std::sqrt(b.first.x * b.first.x + b.first.y * b.first.y);
+
+        // Compare distances
+        if (distanceA != distanceB)
+            return distanceA < distanceB;
+
+        // If distances are equal, compare y-values
+        return a.first.y < b.first.y;
     });
 
-    // Assign the sorted IDs to the final result
-    affiliationsByDistance = std::move(tempIDs);
+    // Extract sorted affiliation IDs from the sorted vector
+    std::vector<AffiliationID> sortedAffiliations;
+    for (const auto& pair : affiliationPairs)
+    {
+        sortedAffiliations.push_back(pair.second);
+    }
 
-    return affiliationsByDistance;
+    return sortedAffiliations;
 }
 
 AffiliationID Datastructures::find_affiliation_with_coord(const Coord xy)
