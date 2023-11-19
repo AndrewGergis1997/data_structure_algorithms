@@ -375,18 +375,39 @@ std::vector<PublicationID> Datastructures::get_publications(AffiliationID id)
 
 PublicationID Datastructures::get_parent(PublicationID id)
 {
-    auto it = publicationsMap.find(id);
-    if (it != publicationsMap.end()) {
-        Publication* publication = &(it->second);
-        for (const auto& pair : publicationsMap) {
-            for (const auto& reference : pair.second.references) {
-                if (reference == publication) {
-                    return pair.first; // Found the parent publication
-                }
-            }
-        }
-    }
-    return NO_PUBLICATION; // If there's no parent publication
+    // Check if the publication with the given ID exists
+     auto it = publicationsMap.find(id);
+     if (it != publicationsMap.end()) {
+         // Retrieve the publication object
+         const Publication& publication = it->second;
+
+         // Check if the publication has a parent
+         if (publication.parentPublication != nullptr) {
+             return publication.parentPublication->id;
+         }
+
+         // Use a hash table to store the parent-child relationships between publications
+         std::unordered_map<PublicationID, PublicationID> parentMap;
+
+         // Populate the parent map by iterating through all publications
+         for (const auto& pair : publicationsMap) {
+             const Publication& currentPublication = pair.second;
+
+             for (Publication* child : currentPublication.references) {
+                 parentMap[child->id] = currentPublication.id;
+             }
+         }
+
+         // Follow the chain of parent-child relationships until we reach a publication with no parent
+         PublicationID currentID = id;
+         while (parentMap.count(currentID) > 0) {
+             currentID = parentMap[currentID];
+         }
+
+         return currentID; // Found the parent publication
+     }
+
+     return NO_PUBLICATION; // If there's no parent publication
 }
 
 std::vector<std::pair<Year, PublicationID> > Datastructures::get_publications_after(AffiliationID affiliationid, Year year)

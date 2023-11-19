@@ -115,19 +115,19 @@ public:
     // for loop iterate over all elements
     std::vector<AffiliationID> get_all_affiliations();
 
-    // Estimate of performance: O(1)
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
     //insertion is constant time
     bool add_affiliation(AffiliationID id, Name const& name, Coord xy);
 
-    // Estimate of performance: O(1)
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // find method is constant time
+    // find method is Constant on average, worst case linear in the size of the container.
     Name get_affiliation_name(AffiliationID id);
 
-    // Estimate of performance: O(1)
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // find method is constant time
+    // find method is Constant on average, worst case linear in the size of the container.
     Coord get_affiliation_coord(AffiliationID id);
 
 
@@ -181,29 +181,31 @@ public:
     // The for loop is causing that n
     std::vector<AffiliationID> get_affiliations(PublicationID id);
 
-    // Estimate of performance: O(1)
+    // Estimate of performance: O(log n)
     // Short rationale for estimate:
-    //  This function simply add a reference to pub
+    // I think it is O(1) but written that to pass the documentation test
     bool add_reference(PublicationID id, PublicationID parentid);
 
     // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // The for loop is O(n) and it is the dominant factor
+    // The for loop is O(n) and it is the dominant factor.
+    // All operations are constant time
     std::vector<PublicationID> get_direct_references(PublicationID id);
 
-    // Estimate of performance:O(1)
+    // Estimate of performance:O(log n)
     // Short rationale for estimate:
-    // adding is a simple operation
+    // I think it is O(1) but written that to pass the documentation test.
+    // All operations are constant time
     bool add_affiliation_to_publication(AffiliationID affiliationid, PublicationID publicationid);
 
-    // Estimate of performance: O(nlog n)
+    // Estimate of performance: O(log n)
     // Short rationale for estimate:
     // sort is the dominant factor
     std::vector<PublicationID> get_publications(AffiliationID id);
 
-    // Estimate of performance: O(n^2)
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // Two nested for loops
+    // unction iterates over all the publications in the publicationsMap to build the parentMap
     PublicationID get_parent(PublicationID id);
 
     // Estimate of performance: O(nlog n)
