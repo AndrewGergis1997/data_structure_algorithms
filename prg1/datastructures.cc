@@ -574,18 +574,24 @@ PublicationID Datastructures::get_closest_common_parent(PublicationID id1, Publi
     // Check if id1 is a parent to id2
     auto it1 = publicationsMap.find(id1);
     if (it1 != publicationsMap.end() && it1->second.parentPublication && ancestors2.count(it1->second.parentPublication->id) > 0) {
+        ancestors1.clear(); // Clean up ancestors1 set
+        ancestors2.clear(); // Clean up ancestors2 set
         return it1->second.parentPublication->id; // Return the direct parent of the parent (id1)
     }
 
     // Check if id2 is a parent to id1
     auto it2 = publicationsMap.find(id2);
     if (it2 != publicationsMap.end() && it2->second.parentPublication && ancestors1.count(it2->second.parentPublication->id) > 0) {
+        ancestors1.clear(); // Clean up ancestors1 set
+        ancestors2.clear(); // Clean up ancestors2 set
         return it2->second.parentPublication->id; // Return the direct parent of the parent (id2)
     }
 
     // Find the common ancestor
     for (const auto& ancestor : ancestors1) {
         if (ancestors2.count(ancestor) > 0) {
+            ancestors1.clear(); // Clean up ancestors1 set
+            ancestors2.clear(); // Clean up ancestors2 set
             return ancestor; // Return the common ancestor
         }
     }
