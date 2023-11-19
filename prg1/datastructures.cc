@@ -555,10 +555,30 @@ bool Datastructures::remove_affiliation(AffiliationID id)
     return true;
 }
 
-PublicationID Datastructures::get_closest_common_parent(PublicationID /*id1*/, PublicationID /*id2*/)
+PublicationID Datastructures::get_closest_common_parent(PublicationID id1, PublicationID id2)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("get_closest_common_parent()");
+    auto findAncestors = [](PublicationID id, const std::unordered_map<PublicationID, Publication>& publicationsMap) -> std::unordered_set<PublicationID> {
+        std::unordered_set<PublicationID> ancestors;
+        auto it = publicationsMap.find(id);
+        while (it != publicationsMap.end() && it->second.parentPublication) {
+            ancestors.insert(it->second.id);
+            it = publicationsMap.find(it->second.parentPublication->id);
+        }
+        return ancestors;
+    };
+
+    std::unordered_set<PublicationID> ancestors1 = findAncestors(id1, publicationsMap);
+    std::unordered_set<PublicationID> ancestors2 = findAncestors(id2, publicationsMap);
+
+    // Find the first common ancestor
+    for (const auto& ancestor : ancestors1) {
+        if (ancestors2.count(ancestor) > 0) {
+            return ancestor;
+        }
+    }
+
+    // No common ancestor found
+    return NO_PUBLICATION;
 }
 
 
