@@ -557,23 +557,36 @@ bool Datastructures::remove_affiliation(AffiliationID id)
 
 PublicationID Datastructures::get_closest_common_parent(PublicationID id1, PublicationID id2)
 {
-    auto findAncestors = [](PublicationID id, const std::unordered_map<PublicationID, Publication>& publicationsMap) -> std::unordered_set<PublicationID> {
-        std::unordered_set<PublicationID> ancestors;
+    auto findAncestors = [&](PublicationID id, std::unordered_set<PublicationID>& ancestors) {
         auto it = publicationsMap.find(id);
         while (it != publicationsMap.end() && it->second.parentPublication) {
-            ancestors.insert(it->second.id);
+            ancestors.insert(it->second.parentPublication->id);
             it = publicationsMap.find(it->second.parentPublication->id);
         }
-        return ancestors;
     };
 
-    std::unordered_set<PublicationID> ancestors1 = findAncestors(id1, publicationsMap);
-    std::unordered_set<PublicationID> ancestors2 = findAncestors(id2, publicationsMap);
+    std::unordered_set<PublicationID> ancestors1;
+    findAncestors(id1, ancestors1);
 
-    // Find the first common ancestor
+    std::unordered_set<PublicationID> ancestors2;
+    findAncestors(id2, ancestors2);
+
+    // Check if id1 is a parent to id2
+    auto it1 = publicationsMap.find(id1);
+    if (it1 != publicationsMap.end() && it1->second.parentPublication && ancestors2.count(it1->second.parentPublication->id) > 0) {
+        return it1->second.parentPublication->id; // Return the direct parent of the parent (id1)
+    }
+
+    // Check if id2 is a parent to id1
+    auto it2 = publicationsMap.find(id2);
+    if (it2 != publicationsMap.end() && it2->second.parentPublication && ancestors1.count(it2->second.parentPublication->id) > 0) {
+        return it2->second.parentPublication->id; // Return the direct parent of the parent (id2)
+    }
+
+    // Find the common ancestor
     for (const auto& ancestor : ancestors1) {
         if (ancestors2.count(ancestor) > 0) {
-            return ancestor;
+            return ancestor; // Return the common ancestor
         }
     }
 
