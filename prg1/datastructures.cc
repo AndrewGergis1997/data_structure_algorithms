@@ -458,10 +458,50 @@ std::vector<PublicationID> Datastructures::get_referenced_by_chain(PublicationID
     return referencedByChain;
 }
 
-std::vector<PublicationID> Datastructures::get_all_references(PublicationID /*id*/)
+std::vector<PublicationID> Datastructures::get_all_references(PublicationID id)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("get_affiliations_closest_to()");
+    // Check if the publication with the given ID exists
+    auto publicationIt = publicationsMap.find(id);
+    if (publicationIt == publicationsMap.end())
+    {
+        return {NO_PUBLICATION};
+    }
+
+    // Vector to store the result
+    std::vector<PublicationID> result;
+
+    // Set to keep track of visited publications
+    std::unordered_set<PublicationID> visited;
+
+    // Stack to perform depth-first search
+    std::vector<PublicationID> stack;
+    stack.push_back(id);
+
+    while (!stack.empty())
+    {
+        PublicationID currentId = stack.back();
+        stack.pop_back();
+
+        // Check if the publication has been visited
+        if (visited.count(currentId) == 0)
+        {
+            // Mark the publication as visited
+            visited.insert(currentId);
+
+            // Add the current publication ID to the result (except for the initial ID)
+            if (currentId != id)
+            {
+                result.push_back(currentId);
+            }
+
+            // Iterate over references and add them to the stack
+            for (const auto &ref : publicationsMap[currentId].references)
+            {
+                stack.push_back(ref->id);
+            }
+        }
+    }
+    return result;
 }
 
 std::vector<AffiliationID> Datastructures::get_affiliations_closest_to(Coord /*xy*/)
