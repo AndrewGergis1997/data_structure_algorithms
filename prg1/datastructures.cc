@@ -354,18 +354,13 @@ std::vector<PublicationID> Datastructures::get_publications(AffiliationID id)
     auto affiliationIt = affiliationsMap.find(id);
 
     if (affiliationIt != affiliationsMap.end()) {
+        const Affiliation& affiliation = affiliationIt->second;
         std::vector<PublicationID> result;
 
-        const Affiliation& affiliation = affiliationIt->second;
-
-        // Assuming you have an index mapping affiliations to publications
         for (const auto& entry : affiliation.publicationsByYear) {
             const std::vector<PublicationID>& publicationIds = entry.second;
             result.insert(result.end(), publicationIds.begin(), publicationIds.end());
         }
-
-        // Sort the publication IDs
-        std::sort(result.begin(), result.end());
 
         return result;
     }

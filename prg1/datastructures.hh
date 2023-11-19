@@ -198,9 +198,9 @@ public:
     // All operations are constant time
     bool add_affiliation_to_publication(AffiliationID affiliationid, PublicationID publicationid);
 
-    // Estimate of performance: O(log n)
+    // Estimate of performance: O(n)
     // Short rationale for estimate:
-    // sort is the dominant factor
+    // the function iterates over each entry in the `publicationsByYear` map of the affiliation,
     std::vector<PublicationID> get_publications(AffiliationID id);
 
     // Estimate of performance: O(n)
