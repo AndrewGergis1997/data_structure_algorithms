@@ -504,10 +504,37 @@ std::vector<PublicationID> Datastructures::get_all_references(PublicationID id)
     return result;
 }
 
-std::vector<AffiliationID> Datastructures::get_affiliations_closest_to(Coord /*xy*/)
+std::vector<AffiliationID> Datastructures::get_affiliations_closest_to(Coord xy)
 {
-    // Replace the line below with your implementation
-    throw NotImplemented("get_affiliations_closest_to()");
+    // Vector to store the result
+    std::vector<AffiliationID> result;
+
+    // Vector to store the distances and affiliations
+    std::vector<std::pair<Distance, AffiliationID>> distances;
+
+    // Calculate distances and fill the distances vector
+    for (const auto& [id, affiliation] : affiliationsMap)
+    {
+        if (affiliation.location.x != NO_VALUE && affiliation.location.y != NO_VALUE)
+        {
+            Distance distance = static_cast<Distance>(std::sqrt(std::pow(xy.x - affiliation.location.x, 2) +
+                                                                std::pow(xy.y - affiliation.location.y, 2)));
+
+            distances.emplace_back(distance, id);
+        }
+    }
+
+    // Sort the distances vector in increasing order of distance
+    std::partial_sort(distances.begin(), distances.begin() + std::min<size_t>(3, distances.size()), distances.end(),
+                      [this](const auto& a, const auto& b) {
+        return a.first < b.first || (a.first == b.first && affiliationsMap[a.second].location < affiliationsMap[b.second].location);
+    });
+
+    // Extract the affiliation IDs from the sorted distances vector
+    std::transform(distances.begin(), distances.begin() + std::min<size_t>(3, distances.size()), std::back_inserter(result),
+                   [](const auto& pair) { return pair.second; });
+
+    return result;
 }
 
 bool Datastructures::remove_affiliation(AffiliationID id)
