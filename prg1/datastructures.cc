@@ -591,6 +591,8 @@ PublicationID Datastructures::get_closest_common_parent(PublicationID id1, Publi
     }
 
     // No common ancestor found
+    ancestors1.clear(); // Clean up ancestors1 set
+    ancestors2.clear(); // Clean up ancestors2 set
     return NO_PUBLICATION;
 }
 
