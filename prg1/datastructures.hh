@@ -3,7 +3,11 @@
 // Student name: Andrew Gergis
 // Student email: andrew.gergis@tuni.fi
 // Student number: 150905291
+// AI tool used and the version: chatGPT v3.5
 
+// The purpose of the use: To help in the bonus functions
+
+// The part(s) where it was utilized: bonus functions and some sections of the optimization
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
 

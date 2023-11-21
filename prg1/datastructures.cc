@@ -109,6 +109,7 @@ std::vector<AffiliationID> Datastructures::get_affiliations_alphabetically()
 {
     // Create a vector of pairs with affiliation names and IDs
     std::vector<std::pair<Name, AffiliationID>> affiliationPairs;
+    affiliationPairs.reserve(affiliationsMap.size());
 
     // Populate the vector with affiliation names and IDs
     for (const auto& entry : affiliationsMap)
@@ -119,48 +120,41 @@ std::vector<AffiliationID> Datastructures::get_affiliations_alphabetically()
     // Sort the vector alphabetically based on affiliation names
     std::sort(affiliationPairs.begin(), affiliationPairs.end());
 
-    // Extract sorted affiliation IDs from the sorted vector
-    std::vector<AffiliationID> sortedAffiliations;
-    for (const auto& pair : affiliationPairs)
-    {
-        sortedAffiliations.push_back(pair.second);
-    }
+    // Extract sorted affiliation IDs directly using std::transform
+    std::vector<AffiliationID> sortedAffiliations(affiliationPairs.size());
+    std::transform(affiliationPairs.begin(), affiliationPairs.end(), sortedAffiliations.begin(),
+                   [](const auto& pair) { return pair.second; });
 
     return sortedAffiliations;
 }
 
 std::vector<AffiliationID> Datastructures::get_affiliations_distance_increasing()
 {
-    // Create a vector of pairs with affiliation coordinates and IDs
-    std::vector<std::pair<Coord, AffiliationID>> affiliationPairs;
+    // Create a vector of pairs with affiliation IDs and distances
+    std::vector<std::pair<AffiliationID, double>> affiliationDistances;
 
-    // Populate the vector with affiliation coordinates and IDs
-    for (const auto& entry : affiliationsMap)
-    {
-        affiliationPairs.emplace_back(entry.second.location, entry.first);
+    // Populate the vector with affiliation IDs and distances
+    for (const auto& entry : affiliationsMap) {
+        double distance = std::sqrt(entry.second.location.x * entry.second.location.x +
+                                    entry.second.location.y * entry.second.location.y);
+        affiliationDistances.emplace_back(entry.first, distance);
     }
 
     // Sort the vector based on distance and y-value
-    std::sort(affiliationPairs.begin(), affiliationPairs.end(),
-              [](const auto& a, const auto& b)
-    {
-        // Calculate Euclidean distances
-        auto distanceA = std::sqrt(a.first.x * a.first.x + a.first.y * a.first.y);
-        auto distanceB = std::sqrt(b.first.x * b.first.x + b.first.y * b.first.y);
-
+    std::sort(affiliationDistances.begin(), affiliationDistances.end(),
+              [this](const auto& a, const auto& b) {
         // Compare distances
-        if (distanceA != distanceB)
-            return distanceA < distanceB;
+        if (a.second != b.second)
+            return a.second < b.second;
 
         // If distances are equal, compare y-values
-        return a.first.y < b.first.y;
+        return affiliationsMap[a.first].location.y < affiliationsMap[b.first].location.y;
     });
 
     // Extract sorted affiliation IDs from the sorted vector
     std::vector<AffiliationID> sortedAffiliations;
-    for (const auto& pair : affiliationPairs)
-    {
-        sortedAffiliations.push_back(pair.second);
+    for (const auto& pair : affiliationDistances) {
+        sortedAffiliations.push_back(pair.first);
     }
 
     return sortedAffiliations;
