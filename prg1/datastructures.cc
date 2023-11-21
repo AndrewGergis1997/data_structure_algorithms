@@ -47,7 +47,13 @@ unsigned int Datastructures::get_affiliation_count()
 
 void Datastructures::clear_all()
 {
-    // Clear affiliations data
+    // Clear affiliations coordenates
+    affiliationsCoord.clear();
+    // Clear affiliations distances
+    affiliationsDistance.clear();
+    // Clear affiliations name
+    affiliationsNmaes.clear();
+    // Clear affiliations strucure
     affiliationsMap.clear();
 
     // Clear publications data
@@ -70,6 +76,10 @@ std::vector<AffiliationID> Datastructures::get_all_affiliations()
 
 }
 
+unsigned int Datastructures::distance(Coord& xy){
+    return sqrt((xy.x * xy.x) + (xy.y * xy.y));
+}
+
 bool Datastructures::add_affiliation(AffiliationID id, const Name &name, Coord xy)
 {
 
@@ -77,10 +87,12 @@ bool Datastructures::add_affiliation(AffiliationID id, const Name &name, Coord x
     if (affiliationsMap.find(id) != affiliationsMap.end()) {
         return false;  // Affiliation with given ID already exists
     }
-
+    unsigned int dist =distance(xy);
     // Affiliation does not exist; add the new affiliation
     affiliationsMap[id] = {name, xy, {}};
-
+    affiliationsNmaes.insert({name,id});
+    affiliationsCoord.insert({xy, id});
+    affiliationsDistance.insert({dist,id});
     return true;  // Successfully added the affiliation
 }
 
@@ -107,57 +119,27 @@ Coord Datastructures::get_affiliation_coord(AffiliationID id)
 
 std::vector<AffiliationID> Datastructures::get_affiliations_alphabetically()
 {
-    // Create a vector of pairs with affiliation names and IDs
-    std::vector<std::pair<Name, AffiliationID>> affiliationPairs;
-    affiliationPairs.reserve(affiliationsMap.size());
+    // Create a vector of affiliation IDs
+    std::vector<AffiliationID> affiliationIDsName;
 
-    // Populate the vector with affiliation names and IDs
-    for (const auto& entry : affiliationsMap)
+    // Populate the vector with affiliation IDs
+    for (const auto& entry : affiliationsNmaes)
     {
-        affiliationPairs.emplace_back(entry.second.affName, entry.first);
+        affiliationIDsName.push_back(entry.second);
     }
 
-    // Sort the vector alphabetically based on affiliation names
-    std::sort(affiliationPairs.begin(), affiliationPairs.end());
-
-    // Extract sorted affiliation IDs directly using std::transform
-    std::vector<AffiliationID> sortedAffiliations(affiliationPairs.size());
-    std::transform(affiliationPairs.begin(), affiliationPairs.end(), sortedAffiliations.begin(),
-                   [](const auto& pair) { return pair.second; });
-
-    return sortedAffiliations;
+    return affiliationIDsName;
 }
 
 std::vector<AffiliationID> Datastructures::get_affiliations_distance_increasing()
 {
-    // Create a vector of pairs with affiliation IDs and distances
-    std::vector<std::pair<AffiliationID, double>> affiliationDistances;
+    // Create a vector IDs
+    std::vector<AffiliationID> affiliationIDsDist;
 
-    // Populate the vector with affiliation IDs and distances
-    for (const auto& entry : affiliationsMap) {
-        double distance = std::sqrt(entry.second.location.x * entry.second.location.x +
-                                    entry.second.location.y * entry.second.location.y);
-        affiliationDistances.emplace_back(entry.first, distance);
-    }
-
-    // Sort the vector based on distance and y-value
-    std::sort(affiliationDistances.begin(), affiliationDistances.end(),
-              [this](const auto& a, const auto& b) {
-        // Compare distances
-        if (a.second != b.second)
-            return a.second < b.second;
-
-        // If distances are equal, compare y-values
-        return affiliationsMap[a.first].location.y < affiliationsMap[b.first].location.y;
-    });
-
-    // Extract sorted affiliation IDs from the sorted vector
-    std::vector<AffiliationID> sortedAffiliations;
-    for (const auto& pair : affiliationDistances) {
-        sortedAffiliations.push_back(pair.first);
-    }
-
-    return sortedAffiliations;
+    // Populate the vector with affiliation names and IDs
+    std::transform(affiliationsDistance.begin(), affiliationsDistance.end(), std::back_inserter(affiliationIDsDist),
+                       [](const auto& entry) { return entry.second; });
+    return affiliationIDsDist;
 }
 
 AffiliationID Datastructures::find_affiliation_with_coord(const Coord xy)
@@ -177,7 +159,33 @@ bool Datastructures::change_affiliation_coord(AffiliationID id, Coord newcoord)
 {
     auto it = affiliationsMap.find(id);
     if (it != affiliationsMap.end()) {
-        it->second.location = newcoord; // Update the coordinates
+        // Remove the old coordinate entry from affiliationsCoord
+        auto oldCoordRange = affiliationsCoord.equal_range(it->second.location);
+        for (auto entry = oldCoordRange.first; entry != oldCoordRange.second; ++entry) {
+            if (entry->second == id) {
+                affiliationsCoord.erase(entry);
+                break;
+            }
+        }
+
+        // Remove the old distance entry from affiliationsDistance
+        auto oldDistanceRange = affiliationsDistance.equal_range(distance(it->second.location));
+        for (auto entry = oldDistanceRange.first; entry != oldDistanceRange.second; ++entry) {
+            if (entry->second == id) {
+                affiliationsDistance.erase(entry);
+                break;
+            }
+        }
+
+        // Update the coordinates
+        it->second.location = newcoord;
+
+        // Insert the new coordinate entry into affiliationsCoord
+        affiliationsCoord.insert({newcoord, id});
+
+        // Insert the new distance entry into affiliationsDistance
+        affiliationsDistance.insert({distance(newcoord), id});
+
         return true; // Affiliation's coordinates updated successfully
     }
     return false; // Affiliation not found

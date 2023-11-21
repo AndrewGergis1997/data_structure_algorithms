@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <map>
 
 // Types for IDs
 using AffiliationID = std::string;
@@ -255,6 +256,10 @@ private:
         std::unordered_map<Year, std::vector<PublicationID>> publicationsByYear;
     };
     std::unordered_map<AffiliationID, Affiliation> affiliationsMap;
+    std::multimap<Name,AffiliationID> affiliationsNmaes;
+    std::multimap<Coord,AffiliationID> affiliationsCoord;
+    std::multimap<unsigned int ,AffiliationID> affiliationsDistance;
+
     struct Publication{
         PublicationID id;
         std::unordered_map<Name, Year> pubData;
@@ -263,7 +268,7 @@ private:
         std::vector<Affiliation*> affiliation;
     };
     std::unordered_map<PublicationID, Publication> publicationsMap;
-
+    unsigned int distance(Coord&);
 };
 
 #endif // DATASTRUCTURES_HH
