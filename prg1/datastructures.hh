@@ -22,6 +22,7 @@
 #include <unordered_set>
 #include <queue>
 #include <map>
+#include <mutex>
 
 // Types for IDs
 using AffiliationID = std::string;

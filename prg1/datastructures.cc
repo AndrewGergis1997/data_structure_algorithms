@@ -144,15 +144,12 @@ std::vector<AffiliationID> Datastructures::get_affiliations_distance_increasing(
 
 AffiliationID Datastructures::find_affiliation_with_coord(const Coord xy)
 {
-    auto it = std::find_if(affiliationsMap.begin(), affiliationsMap.end(), [xy](const auto& pair) {
-        return pair.second.location.x == xy.x && pair.second.location.y == xy.y;
-    });
-
-    if (it != affiliationsMap.end()) {
-        return it->first; // Return the ID of the found affiliation
+    auto it = affiliationsCoord.find(xy);
+    if(it ==affiliationsCoord.end())
+    {
+        return NO_AFFILIATION; // Return a default value if not found
     }
-
-    return NO_AFFILIATION; // Return a default value if not found
+        return it->second;
 }
 
 bool Datastructures::change_affiliation_coord(AffiliationID id, Coord newcoord)
@@ -559,6 +556,8 @@ bool Datastructures::remove_affiliation(AffiliationID id)
 
 PublicationID Datastructures::get_closest_common_parent(PublicationID id1, PublicationID id2)
 {
+    std::mutex mutex;
+
     auto findAncestors = [&](PublicationID id, std::unordered_set<PublicationID>& ancestors) {
         auto it = publicationsMap.find(id);
         while (it != publicationsMap.end() && it->second.parentPublication) {
