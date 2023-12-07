@@ -16,6 +16,7 @@ template <typename Type>
 Type random_in_range(Type start, Type end)
 {
     auto range = end-start;
+
     ++range;
 
     auto num = std::uniform_int_distribution<unsigned long int>(0, range-1)(rand_engine);
@@ -87,7 +88,7 @@ bool Datastructures::add_affiliation(AffiliationID id, const Name &name, Coord x
     }
     unsigned int dist =distance(xy);
     // Affiliation does not exist; add the new affiliation
-    affiliationsMap[id] = {name, xy, {}};
+    affiliationsMap[id] = {id, name, xy, {}, 0};
     affiliationsNmaes.insert({name,id});
     affiliationsCoord.insert({xy, id});
     affiliationsDistance.insert({dist,id});
@@ -136,7 +137,7 @@ std::vector<AffiliationID> Datastructures::get_affiliations_distance_increasing(
 
     // Populate the vector with affiliation names and IDs
     std::transform(affiliationsDistance.begin(), affiliationsDistance.end(), std::back_inserter(affiliationIDsDist),
-                       [](const auto& entry) { return entry.second; });
+                   [](const auto& entry) { return entry.second; });
     return affiliationIDsDist;
 }
 
@@ -147,7 +148,7 @@ AffiliationID Datastructures::find_affiliation_with_coord(const Coord xy)
     {
         return NO_AFFILIATION; // Return a default value if not found
     }
-        return it->second;
+    return it->second;
 }
 
 bool Datastructures::change_affiliation_coord(AffiliationID id, Coord newcoord)
@@ -204,7 +205,7 @@ bool Datastructures::add_publication(PublicationID id, const Name &name, Year ye
     std::sort(sortedAffiliations.begin(), sortedAffiliations.end());
 
     // Process affiliations
-    for (const auto& affID : sortedAffiliations) {
+    for (const auto &affID : sortedAffiliations) {
         // Find the affiliation using its ID
         auto affiliationIt = affiliationsMap.find(affID);
 
@@ -353,7 +354,6 @@ bool Datastructures::add_affiliation_to_publication(AffiliationID affiliationid,
     // Add the affiliation to the publication
     affIt->second.publicationsByYear[pubIt->second.pubData.begin()->second].push_back(publicationid);
     pubIt->second.affiliation.push_back(&affIt->second);
-
     return true;
 }
 
@@ -628,6 +628,162 @@ bool Datastructures::remove_publication(PublicationID publicationid)
     // Erase the publication
     publicationsMap.erase(publicationIter);
     return true;
+}
+
+std::vector<Connection> Datastructures::get_connected_affiliations(AffiliationID id)
+{
+    auto it = affiliationsMap.find(id);
+    if (it == affiliationsMap.end()) {
+        return std::vector<Connection>();
+    }
+
+    std::vector<Connection> connections;
+
+    // Iterate through all publications
+    for (const auto& [pubID, publication] : publicationsMap) {
+        const auto& affiliations = publication.affiliation;
+
+        // Checking if the given affiliation is part of the current publication
+        auto itAffiliation = std::find(affiliations.begin(), affiliations.end(), &it->second);
+        if (itAffiliation != affiliations.end()) {
+            // Iterate through all affiliations in the current publication
+            for (const auto& otherAffiliation : affiliations) {
+                if (otherAffiliation != &it->second) {
+                    // Checking if a connection already exists
+                    auto connectionIt = std::find_if(
+                        connections.begin(),
+                        connections.end(),
+                        [id, otherID = otherAffiliation->id](const Connection& conn) {
+                            return (conn.aff1 == id && conn.aff2 == otherID) ||
+                                   (conn.aff1 == otherID && conn.aff2 == id);
+                        });
+
+                    if (connectionIt != connections.end()) {
+                        // Connection already exists, increment the weight
+                        connectionIt->weight++;
+                    } else {
+                        // Creating a new connection
+                        Connection connection;
+                        connection.aff1 = id;
+                        connection.aff2 = otherAffiliation->id;
+                        connection.weight = 1;
+                        connections.push_back(connection);
+                    }
+                }
+            }
+        }
+    }
+
+    return connections;
+}
+
+std::vector<Connection> Datastructures::get_all_connections()
+{
+    std::vector<Connection> allConnections;
+
+    for (const auto& [pubID, publication] : publicationsMap) {
+        const auto& affiliations = publication.affiliation;
+
+        // Iterate through all affiliations in the current publication
+        for (auto it1 = affiliations.begin(); it1 != affiliations.end(); ++it1) {
+            for (auto it2 = std::next(it1); it2 != affiliations.end(); ++it2) {
+                // Check if a connection already exists
+                auto connectionIt = std::find_if(
+                    allConnections.begin(),
+                    allConnections.end(),
+                    [aff1 = (*it1)->id, aff2 = (*it2)->id](const Connection& conn) {
+                        return (conn.aff1 == aff1 && conn.aff2 == aff2) ||
+                               (conn.aff1 == aff2 && conn.aff2 == aff1);
+                    });
+
+                if (connectionIt == allConnections.end()) {
+                    // Create a new connection
+                    Connection connection;
+                    connection.aff1 = std::min((*it1)->id, (*it2)->id);
+                    connection.aff2 = std::max((*it1)->id, (*it2)->id);
+                    connection.weight = 1;
+                    allConnections.push_back(connection);
+                } else {
+                    // Connection already exists, increment the weight
+                    connectionIt->weight++;
+                }
+            }
+        }
+    }
+
+    return allConnections;
+}
+
+Path Datastructures::get_any_path(AffiliationID source, AffiliationID target)
+{
+    // Checking if source and target affiliations exist
+    auto sourceIt = affiliationsMap.find(source);
+    auto targetIt = affiliationsMap.find(target);
+
+    if (sourceIt == affiliationsMap.end() || targetIt == affiliationsMap.end()) {
+        // Source or target affiliation does not exist
+        return {};
+    }
+
+    // Perform a breadth-first search to find a path
+    std::queue<AffiliationID> queue;
+    std::unordered_map<AffiliationID, AffiliationID> parentMap;
+    std::unordered_map<AffiliationID, int> weights;  // Map to store weights
+
+    queue.push(source);
+    weights[source] = 0;  // Initial weight is 0 for the source affiliation
+
+    while (!queue.empty()) {
+        AffiliationID current = queue.front();
+        queue.pop();
+
+        for (const auto& connection : get_connected_affiliations(current)) {
+            AffiliationID neighbor = (connection.aff1 == current) ? connection.aff2 : connection.aff1;
+
+            if (weights.find(neighbor) == weights.end()) {
+                queue.push(neighbor);
+                weights[neighbor] = weights[current] + connection.weight;
+                parentMap[neighbor] = current;
+            }
+        }
+    }
+
+    // Reconstructing the path from target to source
+    std::vector<Connection> path;
+    AffiliationID current = target;
+
+    while (parentMap.find(current) != parentMap.end()) {
+        AffiliationID parent = parentMap[current];
+        Connection connection;
+        connection.aff1 = parent;
+        connection.aff2 = current;
+        connection.weight = weights[current] - weights[parent];
+        path.push_back(connection);
+        current = parent;
+    }
+
+    // Reverse the path to have it from source to target
+    std::reverse(path.begin(), path.end());
+
+    return path;
+}
+
+Path Datastructures::get_path_with_least_affiliations(AffiliationID /*source*/, AffiliationID /*target*/)
+{
+    // Replace the line below with your implementation
+    throw NotImplemented("get_path_with_least_affiliations()");
+}
+
+Path Datastructures::get_path_of_least_friction(AffiliationID /*source*/, AffiliationID /*target*/)
+{
+    // Replace the line below with your implementation
+    throw NotImplemented("get_path_of_least_friction()");
+}
+
+PathWithDist Datastructures::get_shortest_path(AffiliationID /*source*/, AffiliationID /*target*/)
+{
+    // Replace the line below with your implementation
+    throw NotImplemented("get_shortest_path()");
 }
 
 

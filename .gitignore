@@ -11,4 +11,4 @@ Makefile
 moc_mainwindow.cpp
 moc_predefs.h
 ui_mainwindow.h
-
+*.mhtml
