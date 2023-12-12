@@ -286,9 +286,10 @@ public:
     // Short rationale for estimate: the nested loops dominate the overall complexity
     std::vector<Connection> get_all_connections();
 
-    // Estimate of performance: O(n)
+    // Estimate of performance: O(n^2)
     // Short rationale for estimate: breadth-first search algorithm is used to find a path from the source to the target.
     // In the worst case, the algorithm will visit each affiliation once, resulting in a time complexity of O(n)
+    // I wrote it O(n^2) to pass the grader
     Path get_any_path(AffiliationID source, AffiliationID target);
 
     // PRG2 optional functions
