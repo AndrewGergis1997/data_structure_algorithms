@@ -276,17 +276,17 @@ public:
     // PRG 2 functions:
 
     // Estimate of performance: O(n^2)
-    // Short rationale for estimate:
+    // Short rationale for estimate:The outer loop iterates through all publications,
+    // which has a complexity of O(n), where n is the number of publications.
+    // The inner loop iterates through all affiliations in the current publication,
+    // which also has a complexity of O(n), where n is the number of affiliations in the publication.
     std::vector<Connection> get_connected_affiliations(AffiliationID id);
 
     // Estimate of performance: O(n^2)
-    // Short rationale for estimate: The outer loop iterates through all publications,
-    // which has a complexity of O(n),where n is the number of publications.
-    // The inner loop iterates through all affiliations in the current publication,
-    // which also has a complexity of O(n)
+    // Short rationale for estimate: the nested loops dominate the overall complexity
     std::vector<Connection> get_all_connections();
 
-    // Estimate of performance: O(n^2)
+    // Estimate of performance: O(n)
     // Short rationale for estimate: breadth-first search algorithm is used to find a path from the source to the target.
     // In the worst case, the algorithm will visit each affiliation once, resulting in a time complexity of O(n)
     Path get_any_path(AffiliationID source, AffiliationID target);
