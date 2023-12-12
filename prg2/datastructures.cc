@@ -782,6 +782,12 @@ Path Datastructures::get_any_path(AffiliationID source, AffiliationID target)
     return path;
 }
 
+bool Datastructures::compareAffiliations(AffiliationID a, AffiliationID b) {
+    std::unordered_map<AffiliationID, int> weights;
+    return weights[a] > weights[b];
+}
+
+
 Path Datastructures::get_path_with_least_affiliations(AffiliationID source, AffiliationID target)
 {
     // Check if source and target affiliations exist
@@ -795,9 +801,7 @@ Path Datastructures::get_path_with_least_affiliations(AffiliationID source, Affi
 
     std::unordered_map<AffiliationID, int> weights;
     // Custom comparator for the priority queue based on weights
-    auto compare = [&](AffiliationID a, AffiliationID b) {
-        return weights[a] > weights[b];
-    };
+    auto compare = std::bind(&Datastructures::compareAffiliations, this, std::placeholders::_1, std::placeholders::_2);
 
     // Priority queue to select the affiliation with the minimum weight
     std::priority_queue<AffiliationID, std::vector<AffiliationID>, decltype(compare)> priorityQueue(compare);

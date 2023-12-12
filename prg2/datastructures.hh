@@ -334,7 +334,7 @@ private:
     };
     std::unordered_map<PublicationID, Publication> publicationsMap;
     unsigned int distance(Coord&);
-
+    bool compareAffiliations(AffiliationID a, AffiliationID b);
 };
 
 #endif // DATASTRUCTURES_HH
