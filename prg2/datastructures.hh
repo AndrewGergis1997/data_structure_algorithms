@@ -280,7 +280,10 @@ public:
     std::vector<Connection> get_connected_affiliations(AffiliationID id);
 
     // Estimate of performance: O(n^2)
-    // Short rationale for estimate: the nested loops dominate the overall complexity
+    // Short rationale for estimate: The outer loop iterates through all publications,
+    // which has a complexity of O(n),where n is the number of publications.
+    // The inner loop iterates through all affiliations in the current publication,
+    // which also has a complexity of O(n)
     std::vector<Connection> get_all_connections();
 
     // Estimate of performance: O(n^2)
