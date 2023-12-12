@@ -680,6 +680,7 @@ std::vector<Connection> Datastructures::get_connected_affiliations(AffiliationID
 std::vector<Connection> Datastructures::get_all_connections()
 {
     std::vector<Connection> allConnections;
+    std::set<std::pair<AffiliationID, AffiliationID>> connectionSet;
 
     for (const auto& [pubID, publication] : publicationsMap) {
         const auto& affiliations = publication.affiliation;
@@ -687,25 +688,34 @@ std::vector<Connection> Datastructures::get_all_connections()
         // Iterate through all affiliations in the current publication
         for (auto it1 = affiliations.begin(); it1 != affiliations.end(); ++it1) {
             for (auto it2 = std::next(it1); it2 != affiliations.end(); ++it2) {
-                // Check if a connection already exists
-                auto connectionIt = std::find_if(
-                    allConnections.begin(),
-                    allConnections.end(),
-                    [aff1 = (*it1)->id, aff2 = (*it2)->id](const Connection& conn) {
-                        return (conn.aff1 == aff1 && conn.aff2 == aff2) ||
-                               (conn.aff1 == aff2 && conn.aff2 == aff1);
-                    });
+                // Create a pair of affiliations to represent the connection
+                std::pair<AffiliationID, AffiliationID> connectionPair(
+                    std::min((*it1)->id, (*it2)->id),
+                    std::max((*it1)->id, (*it2)->id));
 
-                if (connectionIt == allConnections.end()) {
+                // Check if the connection already exists
+                auto [_, inserted] = connectionSet.insert(connectionPair);
+
+                if (inserted) {
                     // Create a new connection
                     Connection connection;
-                    connection.aff1 = std::min((*it1)->id, (*it2)->id);
-                    connection.aff2 = std::max((*it1)->id, (*it2)->id);
+                    connection.aff1 = connectionPair.first;
+                    connection.aff2 = connectionPair.second;
                     connection.weight = 1;
                     allConnections.push_back(connection);
                 } else {
                     // Connection already exists, increment the weight
-                    connectionIt->weight++;
+                    auto connectionIt = std::find_if(
+                        allConnections.begin(),
+                        allConnections.end(),
+                        [aff1 = connectionPair.first, aff2 = connectionPair.second](const Connection& conn) {
+                            return (conn.aff1 == aff1 && conn.aff2 == aff2) ||
+                                   (conn.aff1 == aff2 && conn.aff2 == aff1);
+                        });
+
+                    if (connectionIt != allConnections.end()) {
+                        connectionIt->weight++;
+                    }
                 }
             }
         }
@@ -716,22 +726,19 @@ std::vector<Connection> Datastructures::get_all_connections()
 
 Path Datastructures::get_any_path(AffiliationID source, AffiliationID target)
 {
-    // Checking if source and target affiliations exist
     auto sourceIt = affiliationsMap.find(source);
     auto targetIt = affiliationsMap.find(target);
 
     if (sourceIt == affiliationsMap.end() || targetIt == affiliationsMap.end()) {
-        // Source or target affiliation does not exist
         return {};
     }
 
-    // Perform a breadth-first search to find a path
     std::queue<AffiliationID> queue;
     std::unordered_map<AffiliationID, AffiliationID> parentMap;
-    std::unordered_map<AffiliationID, int> weights;  // Map to store weights
+    std::unordered_map<AffiliationID, int> weights;
 
     queue.push(source);
-    weights[source] = 0;  // Initial weight is 0 for the source affiliation
+    weights[source] = 0;
 
     while (!queue.empty()) {
         AffiliationID current = queue.front();
@@ -740,15 +747,88 @@ Path Datastructures::get_any_path(AffiliationID source, AffiliationID target)
         for (const auto& connection : get_connected_affiliations(current)) {
             AffiliationID neighbor = (connection.aff1 == current) ? connection.aff2 : connection.aff1;
 
+            // Check if neighbor is already processed (avoid re-processing)
             if (weights.find(neighbor) == weights.end()) {
                 queue.push(neighbor);
                 weights[neighbor] = weights[current] + connection.weight;
+                parentMap[neighbor] = current;
+
+                // Check if the target is reached early, break the loop
+                if (neighbor == target) {
+                    queue = {}; // Clear the queue to break out of the loop
+                    break;
+                }
+            }
+        }
+    }
+
+    // Check if a path is found
+    if (parentMap.find(target) == parentMap.end()) {
+        return {};
+    }
+
+    // Reconstructing the path from target to source
+    Path path;
+    AffiliationID current = target;
+
+    while (parentMap.find(current) != parentMap.end()) {
+        AffiliationID parent = parentMap[current];
+        path.push_back({parent, current, weights[current] - weights[parent]});
+        current = parent;
+    }
+
+    std::reverse(path.begin(), path.end());
+
+    return path;
+}
+
+Path Datastructures::get_path_with_least_affiliations(AffiliationID source, AffiliationID target)
+{
+    // Check if source and target affiliations exist
+    auto sourceIt = affiliationsMap.find(source);
+    auto targetIt = affiliationsMap.find(target);
+
+    if (sourceIt == affiliationsMap.end() || targetIt == affiliationsMap.end()) {
+        // Source or target affiliation does not exist
+        return {};
+    }
+
+    std::unordered_map<AffiliationID, int> weights;
+    // Custom comparator for the priority queue based on weights
+    auto compare = [&](AffiliationID a, AffiliationID b) {
+        return weights[a] > weights[b];
+    };
+
+    // Priority queue to select the affiliation with the minimum weight
+    std::priority_queue<AffiliationID, std::vector<AffiliationID>, decltype(compare)> priorityQueue(compare);
+
+    // Initialize maps
+    std::unordered_map<AffiliationID, AffiliationID> parentMap;
+    std::unordered_map<AffiliationID, int> affiliationsCount;
+
+    // Initialize source
+    priorityQueue.push(source);
+    affiliationsCount[source] = 1;
+    weights[source] = 0;
+
+    while (!priorityQueue.empty()) {
+        AffiliationID current = priorityQueue.top();
+        priorityQueue.pop();
+
+        for (const auto& connection : get_connected_affiliations(current)) {
+            AffiliationID neighbor = (connection.aff1 == current) ? connection.aff2 : connection.aff1;
+            int newWeight = weights[current] + connection.weight;
+
+            if (weights.find(neighbor) == weights.end() || newWeight < weights[neighbor]) {
+                priorityQueue.push(neighbor);
+                affiliationsCount[neighbor] = affiliationsCount[current] + 1;
+                weights[neighbor] = newWeight;
                 parentMap[neighbor] = current;
             }
         }
     }
 
-    // Reconstructing the path from target to source
+    // Reconstruct the path from target to source
     std::vector<Connection> path;
     AffiliationID current = target;
 
@@ -765,13 +845,7 @@ Path Datastructures::get_any_path(AffiliationID source, AffiliationID target)
     // Reverse the path to have it from source to target
     std::reverse(path.begin(), path.end());
 
-    return path;
-}
-
-Path Datastructures::get_path_with_least_affiliations(AffiliationID /*source*/, AffiliationID /*target*/)
-{
-    // Replace the line below with your implementation
-    throw NotImplemented("get_path_with_least_affiliations()");
+       return path;
 }
 
 Path Datastructures::get_path_of_least_friction(AffiliationID /*source*/, AffiliationID /*target*/)

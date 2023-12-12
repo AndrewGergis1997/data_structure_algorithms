@@ -4,6 +4,7 @@
 // Student email: andrew.gergis@tuni.fi
 // Student number: 150905291
 // AI tool used and the version: chatGPT v3.5
+// timecomplexity.ai
 
 #ifndef DATASTRUCTURES_HH
 #define DATASTRUCTURES_HH
@@ -15,6 +16,7 @@
 #include <limits>
 #include <functional>
 #include <exception>
+#include <set>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
@@ -68,6 +70,14 @@ struct CoordHash
         return xhash ^ (yhash + 0x9e3779b9 + (xhash << 6) + (xhash >> 2));
     }
 };
+
+struct AffiliationIDHash {
+    std::size_t operator()(const AffiliationID& id) const {
+        // Replace this hash function with your actual implementation
+        return std::hash<std::string>{}(id);
+    }
+};
+
 
 // Example: Defining < for Coord so that it can be used
 // as key for std::map/set
@@ -241,12 +251,14 @@ public:
 
     // Non-compulsory operations
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance:O(n)
+    // Short rationale for estimate:The while loop will iterate at most n times,
+    // where n is the number of publications in the publicationsMap.
     std::vector<PublicationID> get_all_references(PublicationID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance:O(n log n)
+    // Short rationale for estimate:overall time complexity of the code is O(n log n)
+    // due to the sorting operation.
     std::vector<AffiliationID> get_affiliations_closest_to(Coord xy);
 
     // Estimate of performance:
@@ -263,22 +275,26 @@ public:
 
     // PRG 2 functions:
 
-    // Estimate of performance:
+    // Estimate of performance: O(n^2)
     // Short rationale for estimate:
     std::vector<Connection> get_connected_affiliations(AffiliationID id);
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n^2)
+    // Short rationale for estimate: the nested loops dominate the overall complexity
     std::vector<Connection> get_all_connections();
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n)
+    // Short rationale for estimate: breadth-first search algorithm is used to find a path from the source to the target.
+    // In the worst case, the algorithm will visit each affiliation once, resulting in a time complexity of O(n)
     Path get_any_path(AffiliationID source, AffiliationID target);
 
     // PRG2 optional functions
 
-    // Estimate of performance:
-    // Short rationale for estimate:
+    // Estimate of performance: O(n log n)
+    // Short rationale for estimate:The while loop iterates until the priority queue is empty,
+    // which takes O(n) time. Inside the loop, the code iterates over the connections of the current affiliation,
+    // which takes O(log n) time for each connection due to the priority queue operations.
+    // Therefore, the overall time complexity is O(n log n).
     Path get_path_with_least_affiliations(AffiliationID source, AffiliationID target);
 
     // Estimate of performance:
